@@ -1,6 +1,6 @@
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Main {
@@ -8,7 +8,7 @@ public class Main {
       Scanner scanner = new Scanner(System.in);
       TagValidator validator = new TagValidator();
       ArrayList<User> users = new ArrayList<>();
-      List<String> history = new ArrayList<>();
+      LinkedList<String> history = new LinkedList<>();
       boolean running = true;
 
       while (running) {
@@ -114,7 +114,7 @@ public class Main {
    }
 
    private static boolean runValidator(Scanner scanner, TagValidator validator,
-         List<String> history) {
+         LinkedList<String> history) {
       System.out.println("========================================");
       System.out.println("       HTML/XML TAG VALIDATOR");
       System.out.println("========================================");
