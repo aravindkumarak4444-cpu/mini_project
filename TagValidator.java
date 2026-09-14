@@ -1,42 +1,75 @@
 
-// Source code is decompiled from a .class file using FernFlower decompiler (from Intellij IDEA).
-import java.util.*;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TagValidator {
-   private static final Pattern TAG_PATTERN = Pattern.compile("<(/?)([A-Za-z][A-Za-z0-9]*)>");
+   private static final Pattern TAG_PATTERN = Pattern.compile("<\\s*(/)?\\s*([A-Za-z][A-Za-z0-9:_-]*)\\b[^>]*>");
 
    public TagValidator() {
    }
 
-   public String validate(String var1) {
-      Stack var2 = new Stack();
-      Matcher var3 = TAG_PATTERN.matcher(var1);
+   public String validate(String document) {
+      if (document == null || document.trim().isEmpty()) {
+         return "ERROR: Document is empty.";
+      }
 
-      while(var3.find()) {
-         boolean var4 = !var3.group(1).isEmpty();
-         String var5 = var3.group(2);
-         if (!var4) {
-            var2.push(var5);
+      String text = document.trim();
+      Stack<TagInfo> stack = new Stack<>();
+      Matcher matcher = TAG_PATTERN.matcher(text);
+
+      while (matcher.find()) {
+         String closingMarker = matcher.group(1);
+         String tagName = matcher.group(2);
+         String rawTag = matcher.group(0);
+         int position = matcher.start();
+         boolean selfClosing = rawTag.endsWith("/>");
+
+         if (selfClosing) {
+            continue;
+         }
+
+         if (closingMarker == null || closingMarker.isEmpty()) {
+            stack.push(new TagInfo(tagName, position));
          } else {
-            if (var2.empty()) {
-               return "INVALID: Unmatched closing tag </" + var5 + ">";
+            if (stack.isEmpty()) {
+               return buildError("Unmatched Closing Tag", "</" + tagName + ">", position);
             }
 
-            String var6 = (String)var2.peek();
-            if (!var6.equals(var5)) {
-               return "INVALID: Expected </" + var6 + "> but found </" + var5 + ">";
+            TagInfo top = stack.peek();
+            if (!top.name.equals(tagName)) {
+               return buildMismatchError(top.name, tagName);
             }
 
-            var2.pop();
+            stack.pop();
          }
       }
 
-      if (var2.empty()) {
+      if (stack.isEmpty()) {
          return "VALID: Tags are properly nested.";
-      } else {
-         return "INVALID: Unclosed tag <" + (String)var2.peek() + ">";
+      }
+
+      TagInfo top = stack.peek();
+      return buildError("Unclosed Tag", "<" + top.name + ">", top.position);
+   }
+
+   private String buildMismatchError(String expectedName, String foundName) {
+      String expectedTag = "</" + expectedName + ">";
+      String foundTag = "</" + foundName + ">";
+      return "INVALID: Expected " + expectedTag + " but found " + foundTag + ".";
+   }
+
+   private String buildError(String errorType, String tag, int position) {
+      return "INVALID: " + errorType + " " + tag + " at position " + position + ".";
+   }
+
+   private static class TagInfo {
+      private final String name;
+      private final int position;
+
+      private TagInfo(String name, int position) {
+         this.name = name;
+         this.position = position;
       }
    }
 }
