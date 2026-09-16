@@ -33,11 +33,11 @@ public class Main {
          String choice = readInput(scanner);
 
          if (choice.equals("1")) {
-            if (login(scanner, users)) {
+            if (login(scanner)) {
                running = runValidator(scanner, validator);
             }
          } else if (choice.equals("2")) {
-            signUp(scanner, users);
+            signUp(scanner);
          } else if (choice.equals("3")) {
             System.out.println("Exiting HTML/XML Tag Validator...");
             running = false;
@@ -50,9 +50,7 @@ public class Main {
    }
 
    private static void showAuthenticationMenu() {
-      System.out.println("========================================");
-      System.out.println("       HTML/XML TAG VALIDATOR");
-      System.out.println("========================================");
+      printHeader("       HTML/XML TAG VALIDATOR");
       System.out.println("1. LOGIN");
       System.out.println("2. SIGN UP");
       System.out.println("3. EXIT");
@@ -60,11 +58,9 @@ public class Main {
       System.out.println("Enter your choice:");
    }
 
-   private static void signUp(Scanner scanner, ArrayList<User> users) {
+   private static void signUp(Scanner scanner) {
       System.out.println();
-      System.out.println("========================================");
-      System.out.println("                 SIGN UP");
-      System.out.println("========================================");
+      printHeader("                 SIGN UP");
 
       System.out.print("Username: ");
       String username = readInput(scanner);
@@ -73,7 +69,7 @@ public class Main {
          return;
       }
 
-      if (findUser(username, users) != null) {
+      if (findUser(username) != null) {
          System.out.println("Username already exists.");
          return;
       }
@@ -101,11 +97,9 @@ public class Main {
       }
    }
 
-   private static boolean login(Scanner scanner, ArrayList<User> users) {
+   private static boolean login(Scanner scanner) {
       System.out.println();
-      System.out.println("========================================");
-      System.out.println("                 LOGIN");
-      System.out.println("========================================");
+      printHeader("                 LOGIN");
 
       int attempts = 0;
       while (attempts < MAX_LOGIN_ATTEMPTS) {
@@ -114,7 +108,7 @@ public class Main {
          System.out.print("Password: ");
          String password = readInput(scanner);
 
-         User user = findUser(username, users);
+         User user = findUser(username);
          if (user != null && user.getPassword().equals(password)) {
             System.out.println();
             System.out.println("Login successful!");
@@ -130,7 +124,7 @@ public class Main {
       return false;
    }
 
-   private static User findUser(String username, ArrayList<User> users) {
+   private static User findUser(String username) {
       for (User user : users) {
          if (user.getUsername().equals(username)) {
             return user;
@@ -160,7 +154,7 @@ public class Main {
             String username = parts[0].trim();
             String password = parts[1].trim();
 
-            if (!username.isEmpty() && !password.isEmpty() && findUser(username, users) == null) {
+            if (!username.isEmpty() && !password.isEmpty() && findUser(username) == null) {
                users.add(new User(username, password));
             }
          }
@@ -170,16 +164,7 @@ public class Main {
    }
 
    private static boolean saveUserToFile(User user) {
-      File file = new File(USERS_FILE);
-      try {
-         if (!file.exists() && !file.createNewFile()) {
-            return false;
-         }
-      } catch (IOException e) {
-         return false;
-      }
-
-      try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+      try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE, true))) {
          // Educational prototype: passwords are stored as plain text.
          // Production applications should use password hashing.
          writer.write(user.getUsername() + "|" + user.getPassword());
@@ -213,10 +198,10 @@ public class Main {
             return false;
          } else if (input.regionMatches(true, 0, "CHECK", 0, 5)) {
             String document = input.substring(5).trim();
-            processCheckDocument(document, validator, "CHECK" + document);
+            processCheckDocument(document, validator);
          } else if (input.regionMatches(true, 0, "FILE", 0, 4)) {
             String filePath = input.substring(4).trim();
-            validateFile(filePath, validator, "FILE");
+            validateFile(filePath, validator);
          } else {
             System.out.println("Invalid choice. Please select a valid option.");
          }
@@ -224,9 +209,7 @@ public class Main {
    }
 
    private static void showValidatorMenu() {
-      System.out.println("========================================");
-      System.out.println("       HTML/XML TAG VALIDATOR");
-      System.out.println("========================================");
+      printHeader("       HTML/XML TAG VALIDATOR");
       System.out.println("1. CHECK DOCUMENT");
       System.out.println("2. VALIDATE FILE");
       System.out.println("3. VIEW HISTORY");
@@ -242,31 +225,31 @@ public class Main {
       System.out.println();
       System.out.print("Enter HTML/XML document: ");
       String document = readInput(scanner);
-      processCheckDocument(document, validator, document);
+      processCheckDocument(document, validator);
    }
 
-   private static void processCheckDocument(String document, TagValidator validator, String sourceText) {
-      if (document == null || document.trim().isEmpty()) {
+   private static void processCheckDocument(String document, TagValidator validator) {
+      if (document.trim().isEmpty()) {
          String result = "ERROR: Document is empty.";
          System.out.println(result);
-         recordValidation(sourceText, result);
+         recordValidation(result);
          return;
       }
 
       String result = validator.validate(document);
       System.out.println(result);
       addHistoryRecord(document, result);
-      recordValidation(document, result);
+      recordValidation(result);
    }
 
    private static void processFileValidation(Scanner scanner, TagValidator validator) {
       System.out.println();
       System.out.print("Enter file path: ");
       String filePath = readInput(scanner);
-      validateFile(filePath, validator, "FILE");
+      validateFile(filePath, validator);
    }
 
-   private static void validateFile(String filePath, TagValidator validator, String sourceLabel) {
+   private static void validateFile(String filePath, TagValidator validator) {
       if (filePath == null || filePath.trim().isEmpty()) {
          System.out.println("ERROR: Invalid file path.");
          return;
@@ -295,19 +278,17 @@ public class Main {
          System.out.println("Reading file...");
          String content = Files.readString(path);
          System.out.println();
-         System.out.println("========================================");
-         System.out.println("FILE VALIDATION");
-         System.out.println("========================================");
+         printHeader("FILE VALIDATION");
          System.out.println();
          System.out.println("File: " + path.getFileName());
          System.out.println();
 
-         if (content == null || content.trim().isEmpty()) {
+         if (content.trim().isEmpty()) {
             System.out.println("ERROR: Document is empty.");
             System.out.println();
             System.out.println("----------------------------------------");
             addHistoryRecord("FILE " + path.getFileName(), "ERROR: Document is empty.");
-            recordValidation(content != null ? content : "", "ERROR: Document is empty.");
+            recordValidation("ERROR: Document is empty.");
             return;
          }
 
@@ -317,7 +298,7 @@ public class Main {
          System.out.println();
          System.out.println("----------------------------------------");
          addHistoryRecord("FILE " + path.getFileName(), result);
-         recordValidation(content, result);
+         recordValidation(result);
       } catch (IOException e) {
          System.out.println("ERROR: Unable to read file.");
       }
@@ -330,9 +311,7 @@ public class Main {
 
    private static void displayHistory() {
       System.out.println();
-      System.out.println("========================================");
-      System.out.println("       VALIDATION HISTORY");
-      System.out.println("========================================");
+      printHeader("       VALIDATION HISTORY");
 
       if (history.isEmpty()) {
          System.out.println("No validation history available.");
@@ -370,18 +349,16 @@ public class Main {
       }
 
       System.out.println();
-      System.out.println("========================================");
-      System.out.println("       VALIDATION STATISTICS");
-      System.out.println("========================================");
+   printHeader("       VALIDATION STATISTICS");
       System.out.println("Total Documents   : " + totalDocuments);
       System.out.println("Valid Documents   : " + validDocuments);
       System.out.println("Invalid Documents : " + invalidDocuments);
       System.out.println("Success Rate      : " + String.format("%.1f%%", successRate));
       System.out.println();
-      System.out.println("========================================");
+      printSeparator();
    }
 
-   private static void recordValidation(String document, String result) {
+   private static void recordValidation(String result) {
       totalDocuments++;
       if (result.startsWith("VALID")) {
          validDocuments++;
@@ -395,6 +372,16 @@ public class Main {
          return "";
       }
       return scanner.nextLine().trim();
+   }
+
+   private static void printHeader(String title) {
+      printSeparator();
+      System.out.println(title);
+      printSeparator();
+   }
+
+   private static void printSeparator() {
+      System.out.println("========================================");
    }
 
    private static void logout() {
